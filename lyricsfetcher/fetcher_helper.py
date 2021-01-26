@@ -17,6 +17,9 @@ class Fetcher:
         # registering the default directory for output
         self.lyrics_directory = self.get_out_dir()
 
+        # registering the token
+        self.token = self.check_token()
+
     def set_out_dir(self, new_out_dir):
         """
         Sets output lyrics directory to specified directory
@@ -75,8 +78,17 @@ class Fetcher:
             with open(f"{self.filedir}/genius_token.conf", "r") as tokenfile:
                 self.token = tokenfile.readline()
             # empty is the default string inside the genius_token.conf file
-        except:  # if the file does not exist
+        except FileNotFoundError:  # if the file does not exist
             self.token = None
+
+    def get_settings(self):
+        """returns current settings
+        """
+        self.check_token  # checking the newest version of the token
+        print(f"Current token: {self.token}")
+        print(f"Current output directory: {self.get_out_dir()}")
+        if self.token == None or self.token == "empty":
+            self.print_warning()
 
     def print_warning(self):
         """prints warning when no token is set
