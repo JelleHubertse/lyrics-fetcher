@@ -25,7 +25,7 @@ setup(
         "docopt>=0.6"
     ],
     version=version,
-    description="fetch lyrics from Genius using your command line",
+    description="Fetch lyrics from Genius using your command line",
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords=["lyrics", "genius", "CLI"],
