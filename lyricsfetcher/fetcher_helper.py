@@ -99,7 +99,7 @@ class Fetcher:
             print(f"Token set to {newtoken}")
         else:
             overwrite = input(
-                f"Token is currently {self.token}\noverwrite existing genius_token.conf file to contain {newtoken}? [y/n]")
+                f"Token is currently {self.token}\noverwrite existing genius_token.conf file to contain {newtoken}? [y/n]: ")
             if str(overwrite.lower().strip()) == "y":
                 os.remove(f"{self.filedir}/genius_token.conf")
                 # recursively calling this function again to write the .conf file
