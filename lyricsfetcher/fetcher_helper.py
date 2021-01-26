@@ -7,7 +7,8 @@ import re
 class Fetcher:
     def __init__(self):
         """
-        Initializes required variables and checks for token availability
+        Initializes required variables.
+        NOTE: token availability is only checked when required
         """
         # specifying the absolute path for finding the correct files later
         absdir = os.path.abspath(__file__)
@@ -16,18 +17,12 @@ class Fetcher:
         # registering the default directory for output
         self.lyrics_directory = self.get_out_dir()
 
-        # checking whether the user has set their genius API token
-        self.token = self.get_token()
-
-        # Initializing the lyricsgenius Genius object
-        self.genius = lyricsgenius.Genius(self.token)
-
     def set_out_dir(self, new_out_dir):
         """
         Sets output lyrics directory to specified directory
 
         Args:
-            args (argparse arguments object): all specified arguments from the CLI
+            new_out_dir (string): new output directory path
         """
         # removing potential backslashes from specified path since they are not required and break the function
         # four backslashes required for regex escaping
@@ -52,7 +47,10 @@ class Fetcher:
 
     def get_out_dir(self):
         """
-        prints the currently set lyrics output directory
+        returns the currently set lyrics output directory
+
+        Returns:
+            self.lyrics_directory [string]: currently set output directory
         """
         with open(f"{self.filedir}/outdir.conf", "r") as outdirfile:
             self.lyrics_directory = outdirfile.readline()
@@ -60,16 +58,13 @@ class Fetcher:
 
     def get_token(self):
         """
-        returns token variable. If token=None, this function displays a warning
+        returns token variable.
 
         Returns:
-            [string]: token (unencrypted)
-            or
-            [Nonetype]: None for a token that's not set/not to be found
+            self.token [string/Nonetype]: token (unencrypted)
         """
+        # checking whether the user has set their genius API token
         self.check_token()
-        if self.token == None or self.token == "empty":
-            print("Genius API token not yet set.\nMake sure to use fetch_lyrics set token 'XXX' where XXX is your Genius API token.\nWithout doing so, this function will not work.\n")
         return self.token
 
     def check_token(self):
@@ -79,28 +74,36 @@ class Fetcher:
         try:
             with open(f"{self.filedir}/genius_token.conf", "r") as tokenfile:
                 self.token = tokenfile.readline()
+            # empty is the default string inside the genius_token.conf file
         except:  # if the file does not exist
             self.token = None
 
-    def set_token(self, token):
+    def print_warning(self):
+        """prints warning when no token is set
+        """
+        print("\nGenius API token not yet set.\nMake sure to use fetch_lyrics set token 'XXX' where XXX is your Genius API token.\nWithout doing so, this function will not work.\n")
+
+    def set_token(self, newtoken):
         """
         Set a new token. Can overwrite current token if necessary. Overwrite requires user confirmation
 
         Args:
-            args (argparse arguments object): all specified arguments from the CLI
+            newtoken (string): token to set
         """
-        self.token = token
+        # checking whether the user has set their genius API token
+        self.check_token()
         if not os.path.isfile(f"{self.filedir}/genius_token.conf"):
             with open(f"{self.filedir}/genius_token.conf", "w+") as tokenfile:
-                tokenfile.write(self.token)
-            print(f"Token set to {self.token}")
+                tokenfile.write(newtoken)
+            self.check_token  # loading in new token as self.token
+            print(f"Token set to {newtoken}")
         else:
             overwrite = input(
-                f"Token is currently {self.get_token()}\noverwrite existing genius_token.conf file to contain {token}? [y/n]")
+                f"Token is currently {self.token}\noverwrite existing genius_token.conf file to contain {newtoken}? [y/n]")
             if str(overwrite.lower().strip()) == "y":
                 os.remove(f"{self.filedir}/genius_token.conf")
                 # recursively calling this function again to write the .conf file
-                self.set_token(token)
+                self.set_token(newtoken)
             else:
                 exit()
 
@@ -110,12 +113,17 @@ class Fetcher:
         Prints error message if lyrics for a given prompt are not found
 
         Args:
-            args (argparse arguments object): all specified arguments from the CLI
+            args (dict): all specified arguments from the CLI, received from the lyricsfetcher.py script
         """
+
         # check for the token again, if no token is found, quit the process
         self.check_token()
-        if self.token == None:
+        if self.token == None or self.token == "empty":
+            self.print_warning()
             quit()
+        else:
+            # Initializing the lyricsgenius Genius object
+            self.genius = lyricsgenius.Genius(self.token)
 
         # extracting required information for the specified arguments
         self.artist_kw = args["<artist>"]
@@ -133,7 +141,7 @@ class Fetcher:
             if args["--copy"]:
                 self.copy_to_clipboard()
 
-            # printing the lyrics as output
+            # printing the lyrics as output on the command line
             print(self.lyrics)
 
         except Exception:  # if no lyris are found:
@@ -151,7 +159,7 @@ class Fetcher:
 
     def copy_to_clipboard(self):
         """
-        Copies found lyris to MacOS clipboard
+        Copies found lyris to (MacOS) clipboard. Compatibility of other OS' under investigation
         """
         process = subprocess.Popen(
             'pbcopy', env={'LANG': 'en_US.UTF-8'}, stdin=subprocess.PIPE)

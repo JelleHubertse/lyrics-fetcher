@@ -19,10 +19,14 @@ Options:
 from .docopt import docopt
 from .fetcher_helper import Fetcher
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 def main():
+    """function that gets run every time the fetch_lyrics command is given
+
+    NOTE: windows compatibility is something under investigation 
+    """
 
     # Fix console for windows users
     # import platform
@@ -34,8 +38,11 @@ def main():
     F = Fetcher()
 
     if args["--settings"]:
-        print(f"Current token: {F.get_token()}")
+        token = F.get_token()
+        print(f"Current token: {token}")
         print(f"Current output directory: {F.get_out_dir()}")
+        if token == None or token == "empty":
+            F.print_warning()
     elif args['set']:
         if args["outdir"]:
             F.set_out_dir(args["<full_path_to_dir>"])
