@@ -59,42 +59,6 @@ class Fetcher:
             self.lyrics_directory = outdirfile.readline()
         return self.lyrics_directory
 
-    def get_token(self):
-        """
-        returns token variable.
-
-        Returns:
-            self.token [string/Nonetype]: token (unencrypted)
-        """
-        # checking whether the user has set their genius API token
-        self.check_token()
-        return self.token
-
-    def check_token(self):
-        """
-        Checks whether a token is saved and loads it into variable called self.token when present
-        """
-        try:
-            with open(f"{self.filedir}/genius_token.conf", "r") as tokenfile:
-                self.token = tokenfile.readline()
-            # empty is the default string inside the genius_token.conf file
-        except FileNotFoundError:  # if the file does not exist
-            self.token = None
-
-    def get_settings(self):
-        """returns current settings
-        """
-        self.check_token  # checking the newest version of the token
-        print(f"Current token: {self.token}")
-        print(f"Current output directory: {self.get_out_dir()}")
-        if self.token == None or self.token == "empty":
-            self.print_warning()
-
-    def print_warning(self):
-        """prints warning when no token is set
-        """
-        print("\nGenius API token not yet set.\nMake sure to use fetch_lyrics set token 'XXX' where XXX is your Genius API token.\nWithout doing so, this function will not work.\n")
-
     def set_token(self, newtoken):
         """
         Set a new token. Can overwrite current token if necessary. Overwrite requires user confirmation
@@ -119,6 +83,38 @@ class Fetcher:
             else:
                 exit()
 
+    def check_token(self):
+        """
+        Checks whether a token is saved and loads it into variable called self.token when present
+
+        Returns:
+            self.token [string/Nonetype]: token (unencrypted)
+        """
+        try:
+            with open(f"{self.filedir}/genius_token.conf", "r") as tokenfile:
+                self.token = tokenfile.readline()
+            if self.token[-2:] == "/n":
+                self.token = self.token[:-2]
+
+        except FileNotFoundError:  # if the file does not exist
+            self.token = None
+
+        return self.token
+
+    def get_settings(self):
+        """returns current settings
+        """
+        self.check_token  # checking the newest version of the token
+        print(f"Current token: {self.token}")
+        print(f"Current output directory: {self.get_out_dir()}")
+        if self.token == None or self.token == "empty":
+            self.print_warning()
+
+    def print_warning(self):
+        """prints warning when no token is set
+        """
+        print("\nGenius API token not yet set.\nMake sure to use fetch_lyrics set token 'XXX' where XXX is your Genius API token.\nWithout doing so, this function will not work.\n")
+
     def fetch(self, args):
         """
         attempts to fetch the lyrics from Genius, and calls the appropriate next fuctions if specicied.
@@ -127,10 +123,9 @@ class Fetcher:
         Args:
             args (dict): all specified arguments from the CLI, received from the lyricsfetcher.py script
         """
-
         # check for the token again, if no token is found, quit the process
-        self.check_token()
-        if self.token == None or self.token == "empty":
+        self.token = self.check_token()
+        if self.token == None or self.token.rstrip() == "empty":
             self.print_warning()
             quit()
         else:
